@@ -1,12 +1,16 @@
 For prisma setup
-1. Install prisma CLI : (Dev dependency)
-   npm i  prisma -D  
+1. Install dependency 
+    npm install
 
 2. Check prisma CLI is working 
     npx prisma
+    or install new package
+    prisma CLI : (Dev dependency)
+    npm i  prisma -D  
 
 3. Initialize prisma project
    npx prisma init
+   
    It will create the prisma folder in root level  containing schema.prisma file 
    We will create the db model in schema.prisma file to interact with db
    Also create the .env file for application entrainment 
