@@ -1,5 +1,5 @@
 const graphql = require("graphql")
-const { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLID, GraphQLInt, GraphQLList, GraphQLNonNull } = graphql
+const { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLID, GraphQLInt, GraphQLList, GraphQLNonNull, GraphQLBoolean } = graphql
 const { PrismaClient } = require("@prisma/client")
 const { book, author } = new PrismaClient()
 const BookType = new GraphQLObjectType({
@@ -135,7 +135,56 @@ const Mutation = new GraphQLObjectType({
                 })
                 return newAuthor
             }
+        },
+        deleteBook: {
+            type: GraphQLString,
+            args: {
+                id: { type: new GraphQLNonNull(GraphQLID) }
+            },
+            resolve(parent, args) {
+                let newAuthor = book.delete({
+                    where: {
+                        id: parseInt(args.id)
+                    }
+                })
+                return "Deleted book for id " + args.id
+            }
+        },
+        deleteAuthor: {
+            type: GraphQLString,
+            args: {
+                id: { type: new GraphQLNonNull(GraphQLID) }
+            },
+            resolve(parent, args) {
+                let newAuthor = author.delete({
+                    where: {
+                        id: parseInt(args.id)
+                    }
+                })
+                return "Deleted author for id " + args.id
+            }
+        },
+        updateBook: {
+            type: BookType,
+            args: {
+                id: { type: new GraphQLNonNull(GraphQLID) },
+                name: { type: GraphQLString },
+                genre: { type: GraphQLString },
+            },
+            resolve(parent, args) {
+                let updatedBook = book.update({
+                    where: {
+                        id: parseInt(args.id)
+                    },
+                    data: {
+                        name: args.name,
+                        genre: args.genre
+                    }
+                })
+                return updatedBook
+            }
         }
+
     }
 })
 

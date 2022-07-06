@@ -10,7 +10,7 @@ For prisma setup
 
 3. Initialize prisma project
    npx prisma init
-   
+
    It will create the prisma folder in root level  containing schema.prisma file 
    We will create the db model in schema.prisma file to interact with db
    Also create the .env file for application entrainment 
@@ -51,6 +51,28 @@ mutation {
     genre
   }
 }
+
+delete author
+mutation {
+     deleteAuthor(id: "1")
+}
+
+delete book
+mutation {
+     deleteBook(id: "1")
+}
+
+update book
+mutation {
+  updateBook(id: "1", name: "Jeevan books", genre: "ddd") {
+    name
+    genre
+    author {
+      name
+    }
+  }
+}
+
 
 10. To fetch query 
 
