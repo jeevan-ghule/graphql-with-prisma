@@ -1,7 +1,11 @@
 const graphql = require("graphql")
-const { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLID, GraphQLInt, GraphQLList, GraphQLNonNull, GraphQLBoolean } = graphql
+const { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLID, GraphQLInt, GraphQLList, GraphQLNonNull, GraphQLBoolean, NoSchemaIntrospectionCustomRule, GraphQLError } = graphql
 const { PrismaClient } = require("@prisma/client")
+const { PubSub } = require("graphql-subscriptions");
 const { book, author } = new PrismaClient()
+const pubsub = new PubSub();
+const AUTHOR_ADDED = "AUTHOR_ADDED"
+
 const BookType = new GraphQLObjectType({
     name: "Book",
     fields: () => ({
@@ -82,8 +86,10 @@ const RootQuery = new GraphQLObjectType({
         },
         books: {
             type: new GraphQLList(BookType),
-            resolve(parent, args) {
+            resolve(parent, args, request) {
                 // return books
+                console.log("books")
+                console.log(JSON.stringify(request.headers));
                 return book.findMany({
                 })
             }
@@ -98,6 +104,7 @@ const RootQuery = new GraphQLObjectType({
         }
     }
 })
+
 const Mutation = new GraphQLObjectType({
     name: "Mutation",
     fields: {
@@ -107,14 +114,23 @@ const Mutation = new GraphQLObjectType({
                 name: { type: new GraphQLNonNull(GraphQLString) },
                 age: { type: new GraphQLNonNull(GraphQLInt) }
             },
-            resolve(parent, args) {
+            async resolve(parent, args) {
 
-                let newAuthor = author.create({
+                console.log(typeof args.age)
+                if (args.age <= 0 || args.age > 100) {
+                    console.log('inside error')
+                    throw new GraphQLError(
+                        `Validation: Should be between 1 to 100,  ${args.age} is not allowed`,
+                    )
+                }
+                let newAuthor = await author.create({
                     data: {
                         name: args.name,
                         age: args.age,
                     }
                 })
+                console.log("new Author added", newAuthor)
+                pubsub.publish(AUTHOR_ADDED, newAuthor)
                 return newAuthor
             }
         },
@@ -122,7 +138,7 @@ const Mutation = new GraphQLObjectType({
             type: BookType,
             args: {
                 name: { type: new GraphQLNonNull(GraphQLString) },
-                genre: { type: new GraphQLNonNull(GraphQLString) },
+                genre: { type: GraphQLString, defaultValue: "Drama" },
                 authorId: { type: new GraphQLNonNull(GraphQLID) }
             },
             resolve(parent, args) {
@@ -188,7 +204,24 @@ const Mutation = new GraphQLObjectType({
     }
 })
 
+const Subscription = new GraphQLObjectType({
+    name: "Subscription",
+    fields: {
+        authorAdded: {
+            type: AuthorType,
+            subscribe(parent, args) {
+                console.log("inside Subscription model")
+                return pubsub.asyncIterator(AUTHOR_ADDED)
+            },
+            resolve: (payload) => {
+                return payload;
+            }
+        }
+    }
+})
+
 module.exports = new GraphQLSchema({
     query: RootQuery,
-    mutation: Mutation
+    mutation: Mutation,
+    subscription: Subscription
 })
