@@ -86,19 +86,92 @@ const RootQuery = new GraphQLObjectType({
         },
         books: {
             type: new GraphQLList(BookType),
+            args: {
+                limit: { type: GraphQLInt, defaultValue: 10 },
+                skip: { type: GraphQLInt, defaultValue: 0 },
+                sortType: { type: GraphQLString, defaultValue: 'desc' },
+                filter: { type: GraphQLString }
+            },
             resolve(parent, args, request) {
                 // return books
                 console.log("books")
-                console.log(JSON.stringify(request.headers));
+                // console.log(JSON.stringify(request.headers));
+                console.log(args)
+                const where = args.filter
+                    ?
+                    { name: { contains: args.filter } }
+                    : {}
+                // return authors
                 return book.findMany({
+                    where: where,
+                    skip: args.skip,
+                    take: args.limit,
+                    orderBy: {
+                        id: args.sortType,
+                    }
                 })
             }
         },
         authors: {
             type: new GraphQLList(AuthorType),
-            resolve(parent, args) {
+            args: {
+                limit: { type: GraphQLInt, defaultValue: 10 },
+                skip: { type: GraphQLInt, defaultValue: 0 },
+                sortType: { type: GraphQLString, defaultValue: 'desc' },
+                filter: { type: GraphQLString }
+            },
+            async resolve(parent, args) {
+
+                console.log(args)
+                const where = args.filter
+                    ?
+                    { name: { contains: args.filter } }
+                    : {}
                 // return authors
                 return author.findMany({
+                    where: where,
+                    skip: args.skip,
+                    take: args.limit,
+                    orderBy: {
+                        id: args.sortType,
+                    }
+                })
+            }
+        },
+        authorsCount: {
+            type: GraphQLInt,
+            args: {
+                filter: { type: GraphQLString }
+            },
+            async resolve(parent, args) {
+
+                console.log(args)
+                const where = args.filter
+                    ?
+                    { name: { contains: args.filter } }
+                    : {}
+                // return authors
+                return author.count({
+                    where: where
+                })
+            }
+
+        },
+        booksCount: {
+            type: GraphQLInt,
+            args: {
+                filter: { type: GraphQLString }
+            },
+            async resolve(parent, args) {
+
+                console.log(args)
+                const where = args.filter
+                    ?
+                    { name: { contains: args.filter } }
+                    : {}
+                // return authors
+                return book.count({
+                    where: where
                 })
             }
         }
