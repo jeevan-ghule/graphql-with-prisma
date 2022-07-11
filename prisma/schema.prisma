@@ -16,7 +16,7 @@ model Book {
   updatedAt DateTime @updatedAt
   name      String   @db.VarChar(255)
   genre     String?
-  author    Author   @relation(fields: [authorId], references: [id])
+  author    Author   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId  Int
 
   @@map("book")

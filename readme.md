@@ -38,9 +38,10 @@ GraphQL
 9. To add data : Mutation  
 create Author
 mutation {
-  addAuthor(name: "jeevan", age: 30) {
+  addAuthor(name: "jeevan", age: 31) {
     name
     age
+    id
   }
 } 
 
@@ -118,3 +119,8 @@ author with all books
     }
   }
 }
+
+
+refer:
+1. rootValue vs context 
+  https://stackoverflow.com/questions/54303171/graphql-what-is-rootvalue-specification-that-is-passed-to-execute

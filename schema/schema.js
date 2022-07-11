@@ -1,5 +1,5 @@
 const graphql = require("graphql")
-const { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLID, GraphQLInt, GraphQLList, GraphQLNonNull, GraphQLBoolean, NoSchemaIntrospectionCustomRule, GraphQLError } = graphql
+const { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLID, GraphQLInt, GraphQLList, GraphQLNonNull, GraphQLError } = graphql
 const { PrismaClient } = require("@prisma/client")
 const { PubSub } = require("graphql-subscriptions");
 const { book, author } = new PrismaClient()
@@ -20,7 +20,7 @@ const BookType = new GraphQLObjectType({
         },
         author: {
             type: AuthorType,
-            resolve(parent, args) {
+            resolve(parent, args, context, info) {
                 console.log("Book parent", parent)
                 return author.findUnique({
                     where: {
@@ -42,7 +42,7 @@ const AuthorType = new GraphQLObjectType({
             type: new GraphQLList(BookType),
             resolve(parent, args) {
                 console.log("Author parent", parent)
-                return book.find({
+                return book.findMany({
                     where: {
                         authorId: parent.id
                     }
@@ -61,8 +61,8 @@ const RootQuery = new GraphQLObjectType({
             args: {
                 id: { type: GraphQLID }
             },
-            resolve(parent, args) {
-                //code to get data for db
+            resolve(parent, args, context, info) {
+
                 return book.findUnique({
                     where: {
                         id: args.id
@@ -75,8 +75,8 @@ const RootQuery = new GraphQLObjectType({
             args: {
                 id: { type: GraphQLID }
             },
-            resolve(parent, args) {
-                //code to get data for db
+            resolve(parent, args, context, info) {
+
                 return author.findUnique({
                     where: {
                         id: args.id
@@ -92,16 +92,12 @@ const RootQuery = new GraphQLObjectType({
                 sortType: { type: GraphQLString, defaultValue: 'desc' },
                 filter: { type: GraphQLString }
             },
-            resolve(parent, args, request) {
-                // return books
-                console.log("books")
-                // console.log(JSON.stringify(request.headers));
-                console.log(args)
+            resolve(parent, args, context, info) {
+
                 const where = args.filter
                     ?
                     { name: { contains: args.filter } }
                     : {}
-                // return authors
                 return book.findMany({
                     where: where,
                     skip: args.skip,
@@ -120,14 +116,12 @@ const RootQuery = new GraphQLObjectType({
                 sortType: { type: GraphQLString, defaultValue: 'desc' },
                 filter: { type: GraphQLString }
             },
-            async resolve(parent, args) {
-
-                console.log(args)
+            resolve(parent, args, context, info) {
                 const where = args.filter
                     ?
                     { name: { contains: args.filter } }
                     : {}
-                // return authors
+
                 return author.findMany({
                     where: where,
                     skip: args.skip,
@@ -143,14 +137,12 @@ const RootQuery = new GraphQLObjectType({
             args: {
                 filter: { type: GraphQLString }
             },
-            async resolve(parent, args) {
+            resolve(parent, args, context, info) {
 
-                console.log(args)
                 const where = args.filter
                     ?
                     { name: { contains: args.filter } }
                     : {}
-                // return authors
                 return author.count({
                     where: where
                 })
@@ -162,14 +154,12 @@ const RootQuery = new GraphQLObjectType({
             args: {
                 filter: { type: GraphQLString }
             },
-            async resolve(parent, args) {
+            resolve(parent, args, context, info) {
 
-                console.log(args)
                 const where = args.filter
                     ?
                     { name: { contains: args.filter } }
                     : {}
-                // return authors
                 return book.count({
                     where: where
                 })
@@ -187,7 +177,7 @@ const Mutation = new GraphQLObjectType({
                 name: { type: new GraphQLNonNull(GraphQLString) },
                 age: { type: new GraphQLNonNull(GraphQLInt) }
             },
-            async resolve(parent, args) {
+            async resolve(parent, args, context, info) {
 
                 console.log(typeof args.age)
                 if (args.age <= 0 || args.age > 100) {
@@ -214,15 +204,15 @@ const Mutation = new GraphQLObjectType({
                 genre: { type: GraphQLString, defaultValue: "Drama" },
                 authorId: { type: new GraphQLNonNull(GraphQLID) }
             },
-            resolve(parent, args) {
-                let newAuthor = book.create({
+            async resolve(parent, args, context, info) {
+                let newBook = await book.create({
                     data: {
                         name: args.name,
                         genre: args.genre,
                         authorId: parseInt(args.authorId)
                     }
                 })
-                return newAuthor
+                return newBook
             }
         },
         deleteBook: {
@@ -230,8 +220,8 @@ const Mutation = new GraphQLObjectType({
             args: {
                 id: { type: new GraphQLNonNull(GraphQLID) }
             },
-            resolve(parent, args) {
-                let newAuthor = book.delete({
+            async resolve(parent, args, context, info) {
+                await book.delete({
                     where: {
                         id: parseInt(args.id)
                     }
@@ -244,8 +234,9 @@ const Mutation = new GraphQLObjectType({
             args: {
                 id: { type: new GraphQLNonNull(GraphQLID) }
             },
-            resolve(parent, args) {
-                let newAuthor = author.delete({
+            async resolve(parent, args, context, info) {
+
+                await author.delete({
                     where: {
                         id: parseInt(args.id)
                     }
@@ -260,8 +251,8 @@ const Mutation = new GraphQLObjectType({
                 name: { type: GraphQLString },
                 genre: { type: GraphQLString },
             },
-            resolve(parent, args) {
-                let updatedBook = book.update({
+            async resolve(parent, args, context, info) {
+                let updatedBook = await book.update({
                     where: {
                         id: parseInt(args.id)
                     },
